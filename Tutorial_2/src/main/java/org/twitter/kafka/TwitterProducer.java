@@ -29,6 +29,8 @@ public class TwitterProducer {
     String token = "";
     String secret = "";
 
+    List<String> terms = Lists.newArrayList("COVID19");
+
     public TwitterProducer(){}
 
     public static void main(String[] args) {
@@ -48,6 +50,16 @@ public class TwitterProducer {
 
         // Create a Kafka Producer
         KafkaProducer<String, String> producer = createKafkaProducer();
+
+        // Add a shutdown hook
+        Runtime.getRuntime().addShutdownHook(new Thread( () -> {
+            logger.info("Stopping application");
+            logger.info("Shutting down client from Twitter");
+            client.stop();
+            logger.info("Closing producer");
+            producer.close();
+            logger.info("Done!");
+        }));
 
         // Loop to send tweets to Kafka
         // on a different thread, or multiple different threads....
@@ -81,7 +93,6 @@ public class TwitterProducer {
         Hosts hosebirdHosts = new HttpHosts(Constants.STREAM_HOST);
         StatusesFilterEndpoint hosebirdEndpoint = new StatusesFilterEndpoint();
 
-        List<String> terms = Lists.newArrayList("COVID19");
         hosebirdEndpoint.trackTerms(terms);
 
         // These secrets should be read from a config file
